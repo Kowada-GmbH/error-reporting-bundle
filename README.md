@@ -37,7 +37,7 @@ If sending the e-mail itself fails (misconfiguration, mailer outage, unreachable
        sender_name: 'Example Admin'
        app_name: 'example.com'
    ```
-   If `receiver` or `sender_address` is missing, the handler throws an `UnrecoverableMessageHandlingException` on every error. This does not abort the request/command — `ErrorHandler` catches it (see above) and writes a notice via `error_log()` instead.
+   If `receiver` or `sender_address` is missing, the handler throws an `UnrecoverableMessageHandlingException` on every error. This does not abort the request/command — `ErrorHandler` catches it (see above) and writes a notice via `error_log()` instead. Needless to say, you can also use environment variables for configuration instead of baking the values into the app.
 
 2. Register the handler in `config/packages/monolog.yaml` — recommended in front of Monolog's own `deduplication` handler, so a recurring error (a cron loop, a broken high-traffic page) doesn't trigger a new e-mail on every single occurrence:
    ```yaml
@@ -64,7 +64,7 @@ If sending the e-mail itself fails (misconfiguration, mailer outage, unreachable
    ```
    Without routing, the e-mail is sent synchronously within the current request.
 
-4. A working `symfony/mailer` transport (`MAILER_DSN`) is assumed - that part stays project-specific and can't be shipped by the bundle.
+4. A working `symfony/mailer` transport (`MAILER_DSN`) is assumed.
 
 ## Development
 
