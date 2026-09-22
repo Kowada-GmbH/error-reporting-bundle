@@ -3,6 +3,7 @@
     "type": "symfony-bundle",
     "license": "proprietary",
     "description": "Shared Symfony bundle for Kowada's automatic error reporting by e-mail",
+    "keywords": ["symfony", "symfony-bundle", "error-reporting", "monolog"],
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {

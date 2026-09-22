@@ -10,13 +10,7 @@ The bundle is maintained here as a versioned Composer dependency and pulled into
 
 ## Installation
 
-Since this is a private package, the repository must be registered as a VCS repository in the consuming project:
-
-```console
-composer config repositories.kowada-error-reporting-bundle vcs https://github.com/kowada-gmbh/error-reporting-bundle.git
-```
-
-The package can then be required as a regular dependency:
+The package is public on [Packagist](https://packagist.org/packages/kowada-gmbh/error-reporting-bundle) (the source itself stays proprietary, only the distribution is public) and can be required as a regular dependency:
 
 ```console
 composer require kowada-gmbh/error-reporting-bundle ^1.0
