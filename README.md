@@ -23,25 +23,13 @@ All classes under `Kowada\ErrorReportingBundle\` are automatically registered as
 Errors that get logged (except HTTP 401/403/404) are automatically e-mailed to a configurable address.
 
 - [`Monolog\ErrorHandler`](src/Monolog/ErrorHandler.php): Monolog handler that dispatches errors as an [`Message\ErrorMessage`](src/Message/ErrorMessage.php) over the Messenger bus.
-- [`MessageHandler\ErrorMessageHandler`](src/MessageHandler/ErrorMessageHandler.php): sends the e-mail, including the stack trace as an attachment, via `@KowadaErrorReporting/emails/error.{html,txt}.twig`.
+- [`MessageHandler\ErrorMessageHandler`](src/MessageHandler/ErrorMessageHandler.php): sends the e-mail, including the stack trace as an attachment, via `@KowadaErrorReporting/emails/error.{html,txt}.twig` (needs `symfony/twig-bundle` active - without it, `TemplatedEmail` silently sends with an empty body instead of failing loudly).
 
 If sending the e-mail itself fails (misconfiguration, mailer outage, unreachable Messenger transport), `ErrorHandler` catches that instead of letting the exception propagate: the original error is therefore never hidden (it still reaches the other Monolog handlers as usual, e.g. the log file), and the reporting failure is additionally recorded via PHP's `error_log()`. If an asynchronous Messenger worker ultimately fails to deliver an `ErrorMessage` (after exhausting retries), this is detected instead of dispatching another `ErrorMessage` about it — preventing a loop of error reports about failed error reports.
 
-`symfony/mailer`, `symfony/messenger`, `symfony/twig-bundle` and `symfony/monolog-bundle` are required by this bundle, so `composer require` pulls in everything needed to actually render and send the report e-mail - no separate integration packages to add by hand. If [Symfony Flex](https://github.com/symfony/flex) manages the consuming project, it registers `TwigBundle` and `MonologBundle` in `config/bundles.php` automatically as soon as they're installed (both ship their own official Flex recipe); without Flex, add them there by hand:
-```php
-Symfony\Bundle\TwigBundle\TwigBundle::class => ['all' => true],
-Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
-```
-(`symfony/twig-bundle` specifically matters here because it's what renders `@KowadaErrorReporting/emails/error.{html,txt}.twig` and registers the `@KowadaErrorReporting` template namespace in the first place - without it, `TemplatedEmail` silently sends with an empty body instead of failing loudly.)
+**Configuration in the consuming project:**
 
-**Configuration in the consuming project** - this bundle doesn't ship a Flex recipe of its own, so these steps stay manual:
-
-1. Register the bundle in `config/bundles.php`:
-   ```php
-   Kowada\ErrorReportingBundle\KowadaErrorReportingBundle::class => ['all' => true],
-   ```
-
-2. Bundle configuration in `config/packages/kowada_error_reporting.yaml`:
+1. Bundle configuration in `config/packages/kowada_error_reporting.yaml`:
    ```yaml
    kowada_error_reporting:
        receiver: 'errors@example.com'
@@ -51,7 +39,7 @@ Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
    ```
    If `receiver` or `sender_address` is missing, the handler throws an `UnrecoverableMessageHandlingException` on every error. This does not abort the request/command — `ErrorHandler` catches it (see above) and writes a notice via `error_log()` instead.
 
-3. Register the handler in `config/packages/monolog.yaml` — recommended in front of Monolog's own `deduplication` handler, so a recurring error (a cron loop, a broken high-traffic page) doesn't trigger a new e-mail on every single occurrence:
+2. Register the handler in `config/packages/monolog.yaml` — recommended in front of Monolog's own `deduplication` handler, so a recurring error (a cron loop, a broken high-traffic page) doesn't trigger a new e-mail on every single occurrence:
    ```yaml
    monolog:
        handlers:
@@ -65,7 +53,7 @@ Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
    ```
    `kowada_error_mail_dedup` is the handler actually active in the stack; MonologBundle recognizes `kowada_error_mail` as referenced by it and does not additionally register it on its own — so nothing needs to be configured twice here. `time` (in seconds) sets how long an *identical* error (same level + same message text) is suppressed after the first delivery; the first occurrence of an error is never delayed by this. If plain registration without deduplication is enough, the `kowada_error_mail` block alone suffices.
 
-4. Recommended: route `ErrorMessage` to an asynchronous Messenger transport so sending the e-mail doesn't block the request:
+3. Recommended: route `ErrorMessage` to an asynchronous Messenger transport so sending the e-mail doesn't block the request:
    ```yaml
    framework:
        messenger:
@@ -76,7 +64,7 @@ Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
    ```
    Without routing, the e-mail is sent synchronously within the current request.
 
-5. A working `symfony/mailer` transport (`MAILER_DSN`) is assumed - that part stays project-specific and can't be shipped by the bundle.
+4. A working `symfony/mailer` transport (`MAILER_DSN`) is assumed - that part stays project-specific and can't be shipped by the bundle.
 
 ## Development
 
