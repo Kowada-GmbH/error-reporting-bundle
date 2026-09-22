@@ -48,7 +48,7 @@ readonly class ErrorMessageHandler {
             strtoupper($message->getLevel()),
             $this->errorReportingAppName ?? '',
             $this->environment,
-            $message->getExceptionMessage()
+            $message->getMessage()
         );
 
         $attachment = new DataPart(
