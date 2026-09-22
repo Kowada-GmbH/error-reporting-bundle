@@ -64,7 +64,9 @@ If sending the e-mail itself fails (misconfiguration, mailer outage, unreachable
    ```
    Without routing, the e-mail is sent synchronously within the current request.
 
-4. A working `symfony/mailer` transport (`MAILER_DSN`) is assumed.
+4. `symfony/twig-bundle` must be registered as an active bundle - it's what renders `@KowadaErrorReporting/emails/error.{html,txt}.twig` and registers the `@KowadaErrorReporting` template namespace in the first place; `TemplatedEmail` silently sends with an empty body without it. If [Symfony Flex](https://github.com/symfony/flex) manages the consuming project, requiring this bundle pulls in `symfony/twig-bundle` as a dependency and Flex registers it in `config/bundles.php` automatically; otherwise add `Symfony\Bundle\TwigBundle\TwigBundle::class => ['all' => true]` there by hand.
+
+5. A working `symfony/mailer` transport (`MAILER_DSN`) is assumed.
 
 ## Development
 
