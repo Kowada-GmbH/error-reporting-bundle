@@ -1,0 +1,16 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      $errorReportingReceiver: '%kowada_error_reporting.receiver%'
+      $errorReportingSenderAddress: '%kowada_error_reporting.sender_address%'
+      $errorReportingSenderName: '%kowada_error_reporting.sender_name%'
+      $errorReportingAppName: '%kowada_error_reporting.app_name%'
+      $environment: '%kernel.environment%'
+
+  Kowada\ErrorReportingBundle\:
+    resource: '../src/'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/KowadaErrorReportingBundle.php'
