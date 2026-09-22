@@ -2,7 +2,7 @@
     "name": "kowada-gmbh/error-reporting-bundle",
     "type": "symfony-bundle",
     "license": "proprietary",
-    "description": "Shared Symfony bundle for Kowada's automatic error reporting by e-mail",
+    "description": "Shared Symfony bundle that automatically e-mails logged errors to a configurable address.",
     "keywords": ["symfony", "symfony-bundle", "error-reporting", "monolog"],
     "minimum-stability": "stable",
     "prefer-stable": true,
