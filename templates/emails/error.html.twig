@@ -8,6 +8,6 @@
         <h2 style="margin: 0 0 16px;">{{ level|upper }}: {{ message }}</h2>
         <p style="margin: 0 0 8px;"><strong>Occurred at:</strong> {{ occurredAt|date('Y-m-d H:i:s') }}</p>
         <p style="margin: 0 0 8px;"><strong>Source:</strong> {{ exceptionFile }}:{{ exceptionLine }}</p>
-        <p style="margin: 16px 0 0;">{{ message }}</p>
+        <p style="margin: 16px 0 0;">{{ exceptionMessage }}</p>
     </body>
 </html>
