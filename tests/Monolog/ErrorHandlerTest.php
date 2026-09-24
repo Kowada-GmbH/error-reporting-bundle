@@ -3,6 +3,7 @@
 namespace Kowada\ErrorReportingBundle\Tests\Monolog;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use Kowada\ErrorReportingBundle\Message\ErrorMessage;
 use Kowada\ErrorReportingBundle\Monolog\ErrorHandler;
 use Kowada\ErrorReportingBundle\Monolog\ErrorLogSpy;
@@ -105,6 +106,42 @@ class ErrorHandlerTest extends TestCase {
             ->willReturn(new Envelope(new stdClass()));
 
         (new ErrorHandler($bus))->handle($this->createRecord(new RuntimeException('boom')));
+    }
+
+    public function testDoesNotRedispatchWhenMailerOfOwnReportCannotBeCreated(): void {
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects($this->never())->method('dispatch');
+
+        (new ErrorHandler($bus))->handle($this->createMessengerFailureRecord(ErrorMessage::class, new InvalidArgumentException('The mailer DSN is invalid.')));
+
+        $this->assertCount(1, ErrorLogSpy::$messages);
+        $this->assertStringContainsString('The mailer DSN is invalid.', ErrorLogSpy::$messages[0]);
+    }
+
+    public function testReportsMessengerFailuresOfOtherMessages(): void {
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(ErrorMessage::class))
+            ->willReturn(new Envelope(new stdClass()));
+
+        (new ErrorHandler($bus))->handle($this->createMessengerFailureRecord(stdClass::class, new RuntimeException('handler failed')));
+    }
+
+    /**
+     * Builds the record Messenger logs once a message has used up its retries, as seen in production when the mailer DSN was invalid.
+     *
+     * @param class-string $messageClass The class of the message that failed
+     * @param Throwable $exception The exception Messenger logs with it
+     */
+    private function createMessengerFailureRecord(string $messageClass, Throwable $exception): LogRecord {
+        return new LogRecord(
+            new DateTimeImmutable(),
+            'messenger',
+            Level::Critical,
+            'Error thrown while handling message {class}. Removing from transport after {retryCount} retries. Error: "{error}"',
+            ['class' => $messageClass, 'message_id' => 4, 'retryCount' => 3, 'error' => $exception->getMessage(), 'exception' => $exception]
+        );
     }
 
     public function testDoesNotRedispatchWhenOwnReportFailedToDeliver(): void {

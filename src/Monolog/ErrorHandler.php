@@ -42,7 +42,7 @@ class ErrorHandler extends AbstractProcessingHandler {
             return;
         }
 
-        if ($this->isFailedDeliveryOfOwnReport($exception)) {
+        if ($this->isFailedDeliveryOfOwnReport($record, $exception)) {
             error_log(sprintf('Kowada ErrorReportingBundle: error-report email could not be delivered: %s', $exception->getMessage()));
 
             return;
@@ -81,9 +81,17 @@ class ErrorHandler extends AbstractProcessingHandler {
     }
 
     /**
-     * @return bool Whether $exception is Messenger reporting that a previously dispatched {@see ErrorMessage} itself failed to be handled (e.g. the mailer is down).
+     * Messenger names the failed message's class in the `class` context of its retry logs. That is the reliable signal,
+     * because the logged exception is only wrapped in a {@see HandlerFailedException} when the handler itself threw;
+     * a mailer that can't even be created (e.g. from an invalid DSN) fails before, with the bare exception.
+     *
+     * @return bool Whether $record is Messenger reporting that a previously dispatched {@see ErrorMessage} itself failed to be handled (e.g. the mailer is down).
      */
-    private function isFailedDeliveryOfOwnReport(Throwable $exception): bool {
+    private function isFailedDeliveryOfOwnReport(LogRecord $record, Throwable $exception): bool {
+        if (($record->context['class'] ?? null) === ErrorMessage::class) {
+            return true;
+        }
+
         return $exception instanceof HandlerFailedException && $exception->getEnvelope()->getMessage() instanceof ErrorMessage;
     }
 
