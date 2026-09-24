@@ -12,9 +12,13 @@ use Symfony\Component\Mime\Part\DataPart;
 
 /**
  * Sends an {@see ErrorMessage} as an e-mail to the configured `kowada_error_reporting.receiver`, with the stack trace attached as a text file.
+ *
+ * The subject names the exception ("RuntimeException: Boom"), the body lists the log message and the exception separately.
  */
 #[AsMessageHandler]
 readonly class ErrorMessageHandler {
+
+    private const int SUBJECT_SUMMARY_LENGTH = 150;
 
     /**
      * @param string|null $errorReportingReceiver Bound to the `kowada_error_reporting.receiver` parameter.
@@ -48,7 +52,7 @@ readonly class ErrorMessageHandler {
             strtoupper($message->getLevel()),
             $this->errorReportingAppName ?? '',
             $this->environment,
-            $message->getMessage()
+            $this->summarize($message)
         );
 
         $attachment = new DataPart(
@@ -66,8 +70,11 @@ readonly class ErrorMessageHandler {
             ->addPart($attachment)
             ->context([
                 'subject' => $subject,
+                'appName' => $this->errorReportingAppName,
+                'environment' => $this->environment,
                 'level' => $message->getLevel(),
                 'message' => $message->getMessage(),
+                'exceptionClass' => $message->getExceptionClass(),
                 'exceptionFile' => $message->getExceptionFile(),
                 'exceptionLine' => $message->getExceptionLine(),
                 'exceptionMessage' => $message->getExceptionMessage(),
@@ -75,6 +82,36 @@ readonly class ErrorMessageHandler {
             ]);
 
         $this->mailer->send($email);
+    }
+
+    /**
+     * @return string The exception as a single line for the subject, like "RuntimeException: Boom", shortened to {@see self::SUBJECT_SUMMARY_LENGTH} characters. Falls back to the log message when the exception has neither class nor message.
+     */
+    private function summarize(ErrorMessage $message): string {
+        $summary = $this->toSingleLine($message->getExceptionMessage());
+        $className = $message->getExceptionClass();
+
+        if ($className !== '') {
+            $shortClassName = substr((string) strrchr('\\' . $className, '\\'), 1);
+            $summary = $summary !== '' ? sprintf('%s: %s', $shortClassName, $summary) : $shortClassName;
+        }
+
+        if ($summary === '') {
+            $summary = $this->toSingleLine($message->getMessage());
+        }
+
+        if (mb_strlen($summary) > self::SUBJECT_SUMMARY_LENGTH) {
+            $summary = rtrim(mb_substr($summary, 0, self::SUBJECT_SUMMARY_LENGTH - 1)) . '…';
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @return string $text with every run of whitespace, including line breaks, collapsed into a single space.
+     */
+    private function toSingleLine(string $text): string {
+        return trim((string) preg_replace('/\s+/u', ' ', $text));
     }
 
 }

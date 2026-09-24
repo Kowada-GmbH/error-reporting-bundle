@@ -97,6 +97,16 @@ class ErrorHandlerTest extends TestCase {
         $this->assertStringContainsString('boom', ErrorLogSpy::$messages[0]);
     }
 
+    public function testPassesExceptionClassOn(): void {
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(static fn (ErrorMessage $message): bool => $message->getExceptionClass() === RuntimeException::class))
+            ->willReturn(new Envelope(new stdClass()));
+
+        (new ErrorHandler($bus))->handle($this->createRecord(new RuntimeException('boom')));
+    }
+
     public function testDoesNotRedispatchWhenOwnReportFailedToDeliver(): void {
         $bus = $this->createMock(MessageBusInterface::class);
         $bus->expects($this->never())->method('dispatch');

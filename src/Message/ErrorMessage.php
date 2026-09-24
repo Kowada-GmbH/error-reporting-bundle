@@ -16,7 +16,8 @@ readonly class ErrorMessage {
         private int $exceptionLine,
         private string $exceptionMessage,
         private string $exceptionTrace,
-        private DateTimeInterface $occurredAt
+        private DateTimeInterface $occurredAt,
+        private ?string $exceptionClass = null
     ) {}
 
     /**
@@ -66,6 +67,13 @@ readonly class ErrorMessage {
      */
     public function getOccurredAt(): DateTimeInterface {
         return $this->occurredAt;
+    }
+
+    /**
+     * @return string The exception's fully qualified class name, or an empty string for messages queued by versions before 1.0.9.
+     */
+    public function getExceptionClass(): string {
+        return $this->exceptionClass ?? '';
     }
 
 }

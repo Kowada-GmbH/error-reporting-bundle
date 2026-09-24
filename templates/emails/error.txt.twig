@@ -1,6 +1,10 @@
-{{ level|upper }}: {{ message }}
+{{ level|upper }}{% if appName %} in {{ appName }}{% endif %} ({{ environment }}) at {{ occurredAt|date('Y-m-d H:i:s T') }}
 
-Occurred at: {{ occurredAt|date('Y-m-d H:i:s') }}
-Source: {{ exceptionFile }}:{{ exceptionLine }}
+Log message:
+{{ message }}
 
+Exception{% if exceptionClass %} ({{ exceptionClass }}){% endif %}:
 {{ exceptionMessage }}
+Thrown in {{ exceptionFile }}:{{ exceptionLine }}
+
+The stack trace is attached.

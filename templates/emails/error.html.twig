@@ -5,9 +5,16 @@
         <title>{{ subject }}</title>
     </head>
     <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #333;">
-        <h2 style="margin: 0 0 16px;">{{ level|upper }}: {{ message }}</h2>
-        <p style="margin: 0 0 8px;"><strong>Occurred at:</strong> {{ occurredAt|date('Y-m-d H:i:s') }}</p>
-        <p style="margin: 0 0 8px;"><strong>Source:</strong> {{ exceptionFile }}:{{ exceptionLine }}</p>
-        <p style="margin: 16px 0 0;">{{ exceptionMessage }}</p>
+        <h2 style="margin: 0 0 4px;">{{ level|upper }}{% if appName %} in {{ appName }}{% endif %} ({{ environment }})</h2>
+        <p style="margin: 0 0 24px; color: #666;">{{ occurredAt|date('Y-m-d H:i:s T') }}</p>
+
+        <h3 style="margin: 0 0 8px;">Log message</h3>
+        <p style="margin: 0 0 24px; white-space: pre-wrap;">{{ message }}</p>
+
+        <h3 style="margin: 0 0 8px;">Exception{% if exceptionClass %} <code style="font-weight: normal;">{{ exceptionClass }}</code>{% endif %}</h3>
+        <p style="margin: 0 0 8px; white-space: pre-wrap;">{{ exceptionMessage }}</p>
+        <p style="margin: 0 0 24px; color: #666;">Thrown in <code>{{ exceptionFile }}:{{ exceptionLine }}</code></p>
+
+        <p style="margin: 0; color: #666;">The stack trace is attached.</p>
     </body>
 </html>

@@ -56,7 +56,8 @@ class ErrorHandler extends AbstractProcessingHandler {
                 $exception->getLine(),
                 $exception->getMessage(),
                 $exception->getTraceAsString(),
-                $record->datetime
+                $record->datetime,
+                $exception::class
             );
 
             $this->bus->dispatch($errorMessage);

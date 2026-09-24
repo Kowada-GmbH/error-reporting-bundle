@@ -11,8 +11,9 @@ class ErrorMessageTest extends TestCase {
     public function testGetters(): void {
         $occurredAt = new DateTimeImmutable('2026-01-01 12:00:00');
 
-        $message = new ErrorMessage('error', 'Something failed', '/path/to/file.php', 42, 'Exception message', 'trace...', $occurredAt);
+        $message = new ErrorMessage('error', 'Something failed', '/path/to/file.php', 42, 'Exception message', 'trace...', $occurredAt, 'App\\Exception\\SyncFailed');
 
+        $this->assertSame('App\\Exception\\SyncFailed', $message->getExceptionClass());
         $this->assertSame('error', $message->getLevel());
         $this->assertSame('Something failed', $message->getMessage());
         $this->assertSame('/path/to/file.php', $message->getExceptionFile());
