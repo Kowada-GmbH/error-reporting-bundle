@@ -20,7 +20,7 @@ composer require kowada-gmbh/error-reporting-bundle ^1.0
 
 All classes under `Kowada\ErrorReportingBundle\` are automatically registered as services via autowiring/autoconfiguration (see [config/services.yaml](config/services.yaml)).
 
-Errors that get logged (except HTTP 401/403/404) are automatically e-mailed to a configurable address.
+Errors that get logged (except HTTP client errors, i.e. any 4xx status) are automatically e-mailed to a configurable address.
 
 - [`Monolog\ErrorHandler`](src/Monolog/ErrorHandler.php): Monolog handler that dispatches errors as an [`Message\ErrorMessage`](src/Message/ErrorMessage.php) over the Messenger bus.
 - [`MessageHandler\ErrorMessageHandler`](src/MessageHandler/ErrorMessageHandler.php): sends the e-mail, including the stack trace as an attachment, via `@KowadaErrorReporting/emails/error.{html,txt}.twig` (needs `symfony/twig-bundle` active - without it, `TemplatedEmail` silently sends with an empty body instead of failing loudly).

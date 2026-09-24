@@ -8,10 +8,11 @@ use Kowada\ErrorReportingBundle\Monolog\ErrorHandler;
 use Kowada\ErrorReportingBundle\Monolog\ErrorLogSpy;
 use Monolog\Level;
 use Monolog\LogRecord;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -46,11 +47,31 @@ class ErrorHandlerTest extends TestCase {
         (new ErrorHandler($bus))->handle($this->createRecord(null));
     }
 
-    public function testIgnoresNotFoundExceptions(): void {
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function clientErrorStatusCodes(): iterable {
+        foreach ([400, 401, 402, 403, 404, 405, 409, 410, 422, 429, 499] as $statusCode) {
+            yield (string) $statusCode => [$statusCode];
+        }
+    }
+
+    #[DataProvider('clientErrorStatusCodes')]
+    public function testIgnoresClientErrorHttpExceptions(int $statusCode): void {
         $bus = $this->createMock(MessageBusInterface::class);
         $bus->expects($this->never())->method('dispatch');
 
-        (new ErrorHandler($bus))->handle($this->createRecord(new NotFoundHttpException()));
+        (new ErrorHandler($bus))->handle($this->createRecord(new HttpException($statusCode)));
+    }
+
+    public function testDispatchesErrorMessageForServerErrorHttpExceptions(): void {
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(ErrorMessage::class))
+            ->willReturn(new Envelope(new stdClass()));
+
+        (new ErrorHandler($bus))->handle($this->createRecord(new HttpException(500)));
     }
 
     public function testDispatchesErrorMessageForRealExceptions(): void {

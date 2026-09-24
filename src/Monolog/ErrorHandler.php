@@ -14,12 +14,10 @@ use Throwable;
 /**
  * Monolog handler that reports logged exceptions by e-mail, dispatching an {@see ErrorMessage} through the Messenger bus.
  *
- * HTTP 401/403/404 are ignored as noise. Failures to deliver the report itself are swallowed and written to
+ * HTTP client errors (4xx) are ignored as noise. Failures to deliver the report itself are swallowed and written to
  * `error_log()` instead of being logged again, so a broken mailer/transport cannot trigger an infinite report loop.
  */
 class ErrorHandler extends AbstractProcessingHandler {
-
-    private const array IGNORED_STATUS_CODES = [404, 403, 401];
 
     /**
      * @param Level $level The minimum log level this handler reports by e-mail.
@@ -40,7 +38,7 @@ class ErrorHandler extends AbstractProcessingHandler {
             return;
         }
 
-        if ($exception instanceof HttpExceptionInterface && in_array($exception->getStatusCode(), self::IGNORED_STATUS_CODES, true)) {
+        if ($this->isClientError($exception)) {
             return;
         }
 
@@ -72,6 +70,13 @@ class ErrorHandler extends AbstractProcessingHandler {
                 $reportingFailure->getMessage()
             ));
         }
+    }
+
+    /**
+     * @return bool Whether $exception is an HTTP exception carrying a 4xx client error status code.
+     */
+    private function isClientError(Throwable $exception): bool {
+        return $exception instanceof HttpExceptionInterface && $exception->getStatusCode() >= 400 && $exception->getStatusCode() < 500;
     }
 
     /**
